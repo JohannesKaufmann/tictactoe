@@ -1,8 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"strings"
 )
 
 var (
@@ -79,6 +84,11 @@ func (b *Board) Get(column, row int) int {
 
 // TODO: rename to HasWinner?
 func (b *Board) IsFinished() (bool, int) {
+	// This function acts on the assumption
+	// that the only way to win, is to be in
+	// the "Middle" and the surrounding place
+	// is taken by the same player.
+
 	for column := 0; column < 3; column++ {
 		for row := 0; row < 3; row++ {
 			placed := b[column][row]
@@ -96,8 +106,10 @@ func (b *Board) IsFinished() (bool, int) {
 			var up = b.Get(column-1, row)
 			var down = b.Get(column+1, row)
 
-			// fmt.Printf("c:%d r:%d -> %d \n", column, row, placed)
-			// fmt.Printf("\t%d _%d_ %d \n", left, placed, right)
+			var topLeft = b.Get(column-1, row-1)
+			var topRight = b.Get(column-1, row+1)
+			var bottomLeft = b.Get(column+1, row-1)
+			var bottomRight = b.Get(column+1, row+1)
 
 			// If the left and right place is taken
 			// by the same player, he has won.
@@ -110,6 +122,14 @@ func (b *Board) IsFinished() (bool, int) {
 				return true, placed
 			}
 
+			// slanted from the topLeft
+			if topLeft == placed && bottomRight == placed {
+				return true, placed
+			}
+			// slanted from the topRight
+			if topRight == placed && bottomLeft == placed {
+				return true, placed
+			}
 		}
 	}
 
@@ -130,13 +150,44 @@ func (b *Board) Print() {
 func main() {
 	// TODO: place game locic in own package
 	fmt.Println("- - - Tic-Tac-Toe - - -")
+	reader := bufio.NewReader(os.Stdin)
 
 	var b Board
-	b.Print()
-	b.Place(0, 1, PlayerX)
-	b.Print()
+	for !b.HasEnded() {
+		fmt.Println("- - ROUND number - -")
+		b.Print()
 
-	fmt.Println(b.IsDraw())
+		if hasWinner, winner := b.IsFinished(); hasWinner {
+			fmt.Println("THERE IS A WINNER")
+			fmt.Println("it is player", winner)
+		}
+
+		fmt.Print("PLAYER X(1) column: ")
+		column, _ := reader.ReadString('\n')
+		fmt.Print("PLAYER X(1) row: ")
+		row, _ := reader.ReadString('\n')
+
+		fmt.Println(column, row)
+
+		co, err := strconv.Atoi(strings.TrimSpace(column))
+		if err != nil {
+			log.Fatal(err)
+		}
+		ro, err := strconv.Atoi(strings.TrimSpace(row))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		b.Place(co, ro, PlayerX)
+	}
+	if b.IsDraw() {
+		fmt.Println("THERE IS A DRAW")
+	}
+
+	// b.Print()
+	// b.Place(0, 1, PlayerX)
+	// b.Print()
+	// fmt.Println(b.IsDraw())
 
 	// TODO: game loop
 	// TODO: prompt for user action

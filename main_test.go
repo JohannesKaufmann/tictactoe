@@ -112,6 +112,26 @@ func TestBoardIsFinished(t *testing.T) {
 			Winner:    1,
 		},
 		{
+			Name: "slanted win from the top left",
+			Board: [3][3]int{
+				{2, 0, 0},
+				{0, 2, 0},
+				{0, 0, 2},
+			},
+			HasWinner: true,
+			Winner:    2,
+		},
+		{
+			Name: "slanted win from the top right",
+			Board: [3][3]int{
+				{0, 0, 2},
+				{0, 2, 0},
+				{2, 0, 0},
+			},
+			HasWinner: true,
+			Winner:    2,
+		},
+		{
 			Name: "real life 1: draw",
 			Board: [3][3]int{
 				{1, 2, 1},
