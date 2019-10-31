@@ -34,6 +34,8 @@ func (b *Board) Place(column, row int, player int) error {
 func (b *Board) HasEnded() bool {
 	for _, column := range b {
 		for _, row := range column {
+			// since a place is still empty,
+			// the game can't have ended yet.
 			if row == Empty {
 				return false
 			}
@@ -50,13 +52,64 @@ func (b *Board) IsDraw() bool {
 		return false
 	}
 
-	// TODO: loop over the array
-	// then look if every field is not empty
+	// if there is no winner, even though
+	// the game has ended, we have a draw.
+	hasWinner, _ := b.IsFinished()
+	if !hasWinner {
+		return true
+	}
 
-	return true
+	return false
 }
+
+// TODO: rename to HasWinner?
 func (b *Board) IsFinished() (bool, int) {
-	// TODO: declare which person won?
+	for column := 0; column < 3; column++ {
+		for row := 0; row < 3; row++ {
+			placed := b[column][row]
+
+			if placed == Empty {
+				continue
+			}
+
+			// we are looking at all neighbors
+			// to see wether they have the same
+			// player on the field.
+
+			var left int
+			var right int
+			if row > 0 {
+				left = b[column][row-1]
+			}
+			if row < 2 {
+				right = b[column][row+1]
+			}
+
+			var up int
+			var down int
+			if column > 0 {
+				up = b[column-1][row]
+			}
+			if column < 2 {
+				down = b[column+1][row]
+			}
+
+			// fmt.Printf("c:%d r:%d -> %d \n", column, row, placed)
+			// fmt.Printf("\t%d _%d_ %d \n", left, placed, right)
+
+			// If the left and right place is taken
+			// by the same player, he has won.
+			if left == placed && right == placed {
+				return true, placed
+			}
+			// If the up and down place is taken
+			// by the same player, he has won.
+			if up == placed && down == placed {
+				return true, placed
+			}
+
+		}
+	}
 
 	return false, 0
 }
