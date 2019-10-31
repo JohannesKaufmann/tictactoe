@@ -1,4 +1,4 @@
-package main
+package board
 
 import (
 	"fmt"
@@ -28,8 +28,8 @@ func TestBoardPlace(t *testing.T) {
 func TestBoardHasEnded(t *testing.T) {
 	var b Board
 
-	if b.HasEnded() != false {
-		t.Error("expected HasEnded to return false")
+	if b.HasNoSpaceLeft() != false {
+		t.Error("expected HasNoSpaceLeft to return false")
 	}
 
 	b.Place(0, 0, PlayerO)
@@ -44,8 +44,8 @@ func TestBoardHasEnded(t *testing.T) {
 	b.Place(2, 1, PlayerO)
 	b.Place(2, 2, PlayerX)
 
-	if b.HasEnded() != true {
-		t.Error("expected HasEnded to return true")
+	if b.HasNoSpaceLeft() != true {
+		t.Error("expected HasNoSpaceLeft to return true")
 	}
 }
 
@@ -54,11 +54,11 @@ func TestBoardIsFinished(t *testing.T) {
 		Name      string
 		Board     Board
 		HasWinner bool
-		Winner    int
+		Winner    Player
 		HasDraw   bool
 	}{
 		{
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{0, 0, 0},
 				{0, 0, 0},
 				{0, 0, 0},
@@ -66,7 +66,7 @@ func TestBoardIsFinished(t *testing.T) {
 			HasWinner: false,
 		},
 		{
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{0, 1, 1},
 				{0, 0, 0},
 				{0, 0, 0},
@@ -74,7 +74,7 @@ func TestBoardIsFinished(t *testing.T) {
 			HasWinner: false,
 		},
 		{
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{2, 1, 1},
 				{0, 0, 0},
 				{0, 0, 0},
@@ -83,7 +83,7 @@ func TestBoardIsFinished(t *testing.T) {
 		},
 		{
 			Name: "horizontal win (on the first column)",
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{1, 1, 1},
 				{0, 0, 0},
 				{0, 0, 0},
@@ -93,7 +93,7 @@ func TestBoardIsFinished(t *testing.T) {
 		},
 		{
 			Name: "horizontal win (on the last column)",
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{0, 0, 0},
 				{0, 0, 0},
 				{1, 1, 1},
@@ -103,7 +103,7 @@ func TestBoardIsFinished(t *testing.T) {
 		},
 		{
 			Name: "vertical win",
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{1, 0, 0},
 				{1, 0, 0},
 				{1, 0, 0},
@@ -113,7 +113,7 @@ func TestBoardIsFinished(t *testing.T) {
 		},
 		{
 			Name: "slanted win from the top left",
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{2, 0, 0},
 				{0, 2, 0},
 				{0, 0, 2},
@@ -123,7 +123,7 @@ func TestBoardIsFinished(t *testing.T) {
 		},
 		{
 			Name: "slanted win from the top right",
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{0, 0, 2},
 				{0, 2, 0},
 				{2, 0, 0},
@@ -133,7 +133,7 @@ func TestBoardIsFinished(t *testing.T) {
 		},
 		{
 			Name: "real life 1: draw",
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{1, 2, 1},
 				{2, 1, 1},
 				{2, 1, 2},
@@ -143,7 +143,7 @@ func TestBoardIsFinished(t *testing.T) {
 		},
 		{
 			Name: "real life 1: draw",
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{1, 2, 1},
 				{2, 1, 1},
 				{2, 1, 2},
@@ -153,7 +153,7 @@ func TestBoardIsFinished(t *testing.T) {
 		},
 		{
 			Name: "real life 2: winner X",
-			Board: [3][3]int{
+			Board: [3][3]Player{
 				{1, 1, 1}, // win
 				{2, 2, 1},
 				{2, 0, 2},
@@ -169,7 +169,7 @@ func TestBoardIsFinished(t *testing.T) {
 			if test.Board.IsDraw() != test.HasDraw {
 				t.Errorf("expcted IsDraw to be %v", test.HasDraw)
 			}
-			hasWinner, winner := test.Board.IsFinished()
+			hasWinner, winner := test.Board.HasWinner()
 
 			if hasWinner != test.HasWinner {
 				t.Errorf("expcted HasWinner to be %v", test.HasWinner)

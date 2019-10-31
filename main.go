@@ -2,141 +2,17 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/JohannesKaufmann/tictactoe/board"
 )
 
-var (
-	Empty   = 0
-	PlayerX = 1
-	PlayerO = 2
-)
-
-var PlaceTakenErr = errors.New("the place is already taken")
-
-// Board is a Custom Type so that we can
-// attach methods to it, that make it
-// easier to interact with.
-type Board [3][3]int
-
-// Place places the player on the Board. Returns an error
-// if the place is already taken by either player.
-func (b *Board) Place(column, row int, player int) error {
-	val := b[column][row]
-	if val != 0 {
-		return PlaceTakenErr
-	}
-
-	b[column][row] = player
-
-	return nil
-}
-
-func (b *Board) HasEnded() bool {
-	for _, column := range b {
-		for _, row := range column {
-			// since a place is still empty,
-			// the game can't have ended yet.
-			if row == Empty {
-				return false
-			}
-		}
-	}
-
-	return true
-}
-
-func (b *Board) IsDraw() bool {
-	// A draw can only occur when all
-	// places on the board are filled.
-	if !b.HasEnded() {
-		return false
-	}
-
-	// if there is no winner, even though
-	// the game has ended, we have a draw.
-	hasWinner, _ := b.IsFinished()
-	if !hasWinner {
-		return true
-	}
-
-	return false
-}
-
-// Get returns the element at this position
-// but returning -1 if the place is outisde the board.
-// Makes it safer to access places on the board
-func (b *Board) Get(column, row int) int {
-	// check wether the index is inside the bounds
-	if column < 0 || column > 2 {
-		return -1
-	}
-	if row < 0 || row > 2 {
-		return -1
-	}
-
-	return b[column][row]
-}
-
-// TODO: rename to HasWinner?
-func (b *Board) IsFinished() (bool, int) {
-	// This function acts on the assumption
-	// that the only way to win, is to be in
-	// the "Middle" and the surrounding place
-	// is taken by the same player.
-
-	for column := 0; column < 3; column++ {
-		for row := 0; row < 3; row++ {
-			placed := b[column][row]
-
-			if placed == Empty {
-				continue
-			}
-
-			// we are looking at all neighbors
-			// to see wether they have the same
-			// player on the field.
-			var left = b.Get(column, row-1)
-			var right = b.Get(column, row+1)
-
-			var up = b.Get(column-1, row)
-			var down = b.Get(column+1, row)
-
-			var topLeft = b.Get(column-1, row-1)
-			var topRight = b.Get(column-1, row+1)
-			var bottomLeft = b.Get(column+1, row-1)
-			var bottomRight = b.Get(column+1, row+1)
-
-			// If the left and right place is taken
-			// by the same player, he has won.
-			if left == placed && right == placed {
-				return true, placed
-			}
-			// If the up and down place is taken
-			// by the same player, he has won.
-			if up == placed && down == placed {
-				return true, placed
-			}
-
-			// slanted from the topLeft
-			if topLeft == placed && bottomRight == placed {
-				return true, placed
-			}
-			// slanted from the topRight
-			if topRight == placed && bottomLeft == placed {
-				return true, placed
-			}
-		}
-	}
-
-	return false, 0
-}
-
-func (b *Board) Print() {
+// printBoard prints the current board in a grid
+func printBoard(b *board.Board) {
 	fmt.Printf("\n\nrow\t\t0 1 2\n")
 	for i, column := range b {
 		fmt.Printf("\ncolumn %d\t", i)
@@ -147,48 +23,101 @@ func (b *Board) Print() {
 	fmt.Println()
 }
 
-func main() {
-	// TODO: place game locic in own package
-	fmt.Println("- - - Tic-Tac-Toe - - -")
-	reader := bufio.NewReader(os.Stdin)
+// askForPlacement is responsible for prompting the
+// user for input and returning the values in a
+// usable format.
+func askForPlacement(reader *bufio.Reader) (int, int, error) {
+	fmt.Print("column: ")
+	columnString, err := reader.ReadString('\n')
+	if err != nil {
+		return 0, 0, err
+	}
 
-	var b Board
-	for !b.HasEnded() {
-		fmt.Println("- - ROUND number - -")
-		b.Print()
+	fmt.Print("row: ")
+	rowString, err := reader.ReadString('\n')
+	if err != nil {
+		return 0, 0, err
+	}
 
-		if hasWinner, winner := b.IsFinished(); hasWinner {
-			fmt.Println("THERE IS A WINNER")
-			fmt.Println("it is player", winner)
-		}
+	// make sure to trim all whitespace
+	columnString = strings.TrimSpace(columnString)
+	rowString = strings.TrimSpace(rowString)
 
-		fmt.Print("PLAYER X(1) column: ")
-		column, _ := reader.ReadString('\n')
-		fmt.Print("PLAYER X(1) row: ")
-		row, _ := reader.ReadString('\n')
+	column, err := strconv.Atoi(columnString)
+	if err != nil {
+		return 0, 0, err
+	}
+	row, err := strconv.Atoi(rowString)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		fmt.Println(column, row)
+	return column, row, nil
+}
 
-		co, err := strconv.Atoi(strings.TrimSpace(column))
+// askForPlacementAndPlace is responsible for handling errors
+// and letting the user try again.
+func askForPlacementAndPlace(reader *bufio.Reader, b *board.Board, player board.Player) {
+	fmt.Println("\n\tPlayer", player, "it is your turn!")
+
+	var needValidInput = true
+	for needValidInput {
+		column, row, err := askForPlacement(reader)
 		if err != nil {
-			log.Fatal(err)
-		}
-		ro, err := strconv.Atoi(strings.TrimSpace(row))
-		if err != nil {
-			log.Fatal(err)
+			fmt.Println("we encountered an unexpected error, try again:", err)
+			continue
 		}
 
-		b.Place(co, ro, PlayerX)
+		err = b.Place(column, row, player)
+		if err != nil && err == board.PlaceTakenErr {
+			fmt.Println("the place that you wanted is already taken, please try again!")
+			continue
+		} else if err != nil {
+			fmt.Println("we encountered an unexpected error, try again:", err)
+			continue
+		}
+
+		needValidInput = false
+	}
+}
+
+// checkForEnd checks wether the game has ended and
+// then quits the program. Quitting should probably
+// be done in the main function...
+func checkForEnd(b *board.Board) {
+	if hasWinner, winner := b.HasWinner(); hasWinner {
+		fmt.Println("\n\nWE HAVE A WINNER!")
+		fmt.Println("it is", winner, "!")
+
+		os.Exit(0)
 	}
 	if b.IsDraw() {
-		fmt.Println("THERE IS A DRAW")
+		fmt.Println("\n\nWE HAVE A DRAW!")
+		fmt.Println("try again :D")
+
+		os.Exit(0)
 	}
+}
 
-	// b.Print()
-	// b.Place(0, 1, PlayerX)
-	// b.Print()
-	// fmt.Println(b.IsDraw())
+func main() {
+	var b board.Board
+	reader := bufio.NewReader(os.Stdin)
 
-	// TODO: game loop
-	// TODO: prompt for user action
+	var round int
+	var gameInProgress = true
+	for gameInProgress {
+		round++
+
+		fmt.Println("\n\t\tROUND", round)
+
+		// Ask Player X
+		printBoard(&b)
+		askForPlacementAndPlace(reader, &b, board.PlayerX)
+		checkForEnd(&b)
+
+		// Ask Player O
+		printBoard(&b)
+		askForPlacementAndPlace(reader, &b, board.PlayerO)
+		checkForEnd(&b)
+	}
 }
