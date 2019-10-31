@@ -62,6 +62,21 @@ func (b *Board) IsDraw() bool {
 	return false
 }
 
+// Get returns the element at this position
+// but returning -1 if the place is outisde the board.
+// Makes it safer to access places on the board
+func (b *Board) Get(column, row int) int {
+	// check wether the index is inside the bounds
+	if column < 0 || column > 2 {
+		return -1
+	}
+	if row < 0 || row > 2 {
+		return -1
+	}
+
+	return b[column][row]
+}
+
 // TODO: rename to HasWinner?
 func (b *Board) IsFinished() (bool, int) {
 	for column := 0; column < 3; column++ {
@@ -75,24 +90,11 @@ func (b *Board) IsFinished() (bool, int) {
 			// we are looking at all neighbors
 			// to see wether they have the same
 			// player on the field.
+			var left = b.Get(column, row-1)
+			var right = b.Get(column, row+1)
 
-			var left int
-			var right int
-			if row > 0 {
-				left = b[column][row-1]
-			}
-			if row < 2 {
-				right = b[column][row+1]
-			}
-
-			var up int
-			var down int
-			if column > 0 {
-				up = b[column-1][row]
-			}
-			if column < 2 {
-				down = b[column+1][row]
-			}
+			var up = b.Get(column-1, row)
+			var down = b.Get(column+1, row)
 
 			// fmt.Printf("c:%d r:%d -> %d \n", column, row, placed)
 			// fmt.Printf("\t%d _%d_ %d \n", left, placed, right)

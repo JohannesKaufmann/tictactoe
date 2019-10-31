@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -157,5 +158,30 @@ func TestBoardIsFinished(t *testing.T) {
 				t.Errorf("expcted Winner to be %v", test.Winner)
 			}
 		})
+	}
+}
+
+func TestBoardGet(t *testing.T) {
+	var b Board
+	b.Place(0, 0, 5)
+	b.Place(1, 1, 6)
+	b.Place(2, 2, 7)
+
+	if b.Get(0, 0) != 5 {
+		fmt.Println(b.Get(0, 0))
+		t.Error("expected Get to return 5")
+	}
+	if b.Get(1, 1) != 6 {
+		t.Error("expected Get to return 6")
+	}
+	if b.Get(2, 2) != 7 {
+		t.Error("expected Get to return 7")
+	}
+
+	if b.Get(-1, -1) != -1 {
+		t.Error("expected Get to return -1 but not panic")
+	}
+	if b.Get(3, 3) != -1 {
+		t.Error("expected Get to return -1 but not panic")
 	}
 }
