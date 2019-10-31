@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	Empty   = 0
@@ -8,19 +11,45 @@ var (
 	PlayerO = 2
 )
 
+var PlaceTakenErr = errors.New("the place is already taken")
+
 // Board is a Custom Type so that we can
 // attach methods to it, that make it
 // easier to interact with.
 type Board [3][3]int
 
-func (b *Board) Place(a, c int, player int) error {
-	b[a][c] = player
-	// TODO: check wether the place is already taken
-	// by another player. Then return error
-	return nil
+// Place places the player on the Board. Returns an error
+// if the place is already taken by either player.
+func (b *Board) Place(column, row int, player int) error {
+	val := b[column][row]
+	if val != 0 {
+		return PlaceTakenErr
+	}
 
+	b[column][row] = player
+
+	return nil
 }
+
+func (b *Board) HasEnded() bool {
+	for _, column := range b {
+		for _, row := range column {
+			if row == Empty {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 func (b *Board) IsDraw() bool {
+	// A draw can only occur when all
+	// places on the board are filled.
+	if !b.HasEnded() {
+		return false
+	}
+
 	// TODO: loop over the array
 	// then look if every field is not empty
 
@@ -33,11 +62,11 @@ func (b *Board) IsFinished() (bool, int) {
 }
 
 func (b *Board) Print() {
-	fmt.Printf("\n\n\t0 1 2\n")
-	for i, e := range b {
-		fmt.Printf("\n%d\t", i)
-		for _, x := range e {
-			fmt.Print(x, " ")
+	fmt.Printf("\n\nrow\t\t0 1 2\n")
+	for i, column := range b {
+		fmt.Printf("\ncolumn %d\t", i)
+		for _, row := range column {
+			fmt.Print(row, " ")
 		}
 	}
 	fmt.Println()
