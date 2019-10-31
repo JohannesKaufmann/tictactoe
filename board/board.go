@@ -1,6 +1,8 @@
 package board
 
-import "errors"
+import (
+	"errors"
+)
 
 type Player int
 
@@ -24,7 +26,7 @@ var PlaceTakenErr = errors.New("the place is already taken")
 // Board is a Custom Type so that we can
 // attach methods to it, that make it
 // easier to interact with.
-type Board [3][3]Player
+type Board [4][4]Player
 
 // Place places the player on the Board. Returns an error
 // if the place is already taken by either player.
@@ -85,55 +87,49 @@ func (b *Board) Get(column, row int) Player {
 	return b[column][row]
 }
 
-func (b *Board) HasWinner() (bool, Player) {
-	// This function acts on the assumption
-	// that the only way to win, is to be in
-	// the "Middle" and the surrounding place
-	// is taken by the same player.
+func areSamePlayers(elements []Player) bool {
+	var lastElement = elements[0]
 
-	for column := 0; column < 3; column++ {
-		for row := 0; row < 3; row++ {
-			placed := b[column][row]
+	// Empty is not a real Player
+	if lastElement == Empty {
+		return false
+	}
 
-			if placed == Empty {
-				continue
-			}
-
-			// we are looking at all neighbors
-			// to see wether they have the same
-			// player on the field.
-			var left = b.Get(column, row-1)
-			var right = b.Get(column, row+1)
-
-			var up = b.Get(column-1, row)
-			var down = b.Get(column+1, row)
-
-			var topLeft = b.Get(column-1, row-1)
-			var topRight = b.Get(column-1, row+1)
-			var bottomLeft = b.Get(column+1, row-1)
-			var bottomRight = b.Get(column+1, row+1)
-
-			// If the left and right place is taken
-			// by the same player, he has won.
-			if left == placed && right == placed {
-				return true, placed
-			}
-			// If the up and down place is taken
-			// by the same player, he has won.
-			if up == placed && down == placed {
-				return true, placed
-			}
-
-			// slanted from the topLeft
-			if topLeft == placed && bottomRight == placed {
-				return true, placed
-			}
-			// slanted from the topRight
-			if topRight == placed && bottomLeft == placed {
-				return true, placed
-			}
+	for _, elem := range elements {
+		if elem != lastElement {
+			return false
 		}
 	}
+
+	return true
+}
+
+func (b *Board) HasWinner() (bool, Player) {
+	// horizontal check
+	for _, row := range b {
+		// `row[:]` is a trick to convert a fixed size
+		// array into a slice. That way I don't have to
+		// hardcode the size of the array.
+		if areSamePlayers(row[:]) {
+			return true, row[0]
+		}
+	}
+
+	// vertical check
+	var inverted [4][4]Player
+	for i := 0; i < len(b); i++ {
+		for j := 0; j < len(b[i]); j++ {
+			inverted[j][i] = b[i][j]
+		}
+	}
+	for _, elems := range inverted {
+		if areSamePlayers(elems[:]) {
+			return true, elems[0]
+		}
+	}
+
+	// diagonal check
+	// TODO: implement diagonal check
 
 	return false, 0
 }
